@@ -4,7 +4,7 @@
  * Copyright (C) 2014  mc.fishdish@gmail.com
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as 
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
@@ -38,7 +38,7 @@
 #include "log.h"
 
 satipRTSP::satipRTSP(satipConfig* satip_config,
-			     const char* host, 
+			     const char* host,
 			     const char* rtsp_port,
 			     satipRTP *rtp):
 			     m_host(NULL),
@@ -66,7 +66,7 @@ satipRTSP::satipRTSP(satipConfig* satip_config,
 
 	m_timer_reset_connect = m_satip_timer.create(timeoutConnect, (void *)this, "reset connect");
 	m_timer_keep_alive = m_satip_timer.create(timeoutKeepAlive, (void *)this, "keep alive message");
-	
+
 	resetConnect();
 }
 
@@ -134,12 +134,12 @@ int satipRTSP::connectToServer()
 
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;    /* IPv4 or IPv6 */
-	hints.ai_socktype = SOCK_STREAM; 
+	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = 0;
 	hints.ai_protocol = 0;
 
 	error = getaddrinfo(m_host, m_port, &hints, &result);
-	if (error) 
+	if (error)
 	{
 		if (error == EAI_SYSTEM)
 		{
@@ -152,7 +152,7 @@ int satipRTSP::connectToServer()
 		return RTSP_ERROR;
 	}
 
-	for (rp = result; rp != NULL; rp = rp->ai_next) 
+	for (rp = result; rp != NULL; rp = rp->ai_next)
 	{
 		fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if (fd == -1)
@@ -177,9 +177,9 @@ int satipRTSP::connectToServer()
 		close(fd); /* connect fail */
 	}
 
-	if (rp == NULL) {           
+	if (rp == NULL) {
 		DEBUG(MSG_NET, "Could not connect\n");
-		freeaddrinfo(result);   
+		freeaddrinfo(result);
 		return RTSP_ERROR;
 	}
 
@@ -524,7 +524,7 @@ int satipRTSP::sendSetup()
 {
 	std::string tx_data;
 	std::ostringstream oss_tx_data;
-	/* 
+	/*
 	str = SETUP rtsp://192.168.100.101/?src=1&freq=10202&pol=v&msys=dvbs&sr=27500&fec=34&pids=0,16,25,104 RTSP/1.0
 	CSeq: 1
 	Transport: RTP/AVP;unicast;client_port=1400-1401
@@ -532,9 +532,6 @@ int satipRTSP::sendSetup()
 	*/
 
 	oss_tx_data << "SETUP rtsp://" << m_host << ":" << m_port << "/";
-	if (m_rtsp_stream_id != -1)
-		oss_tx_data << "stream=" << m_rtsp_stream_id;
-
 	oss_tx_data << m_satip_config->getSetupData() << " RTSP/1.0\r\n";
 	oss_tx_data << "CSeq: " << m_rtsp_cseq++ << "\r\n";
 	if (!m_rtsp_session_id.empty())
@@ -563,14 +560,14 @@ int satipRTSP::sendPlay()
 	std::string tx_data;
 	std::ostringstream oss_tx_data;
 	/*
-	PLAY rtsp://192.168.128.5/stream=1 RTSP/1.0
+	PLAY rtsp://192.168.128.5/ RTSP/1.0
 	CSeq: 2
 	Session: 12345678
 	<CRLF>
 	*/
 
 	/*
-	PLAY rtsp://192.168.178.57:554/stream=5?src=1&freq=11538&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000
+	PLAY rtsp://192.168.178.57:554/?src=1&freq=11538&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000
 	&fec=56&pids=0,611,621,631 RTSP/1.0
 	CSeq:5
 	Session:21a15c02c1ee244
@@ -582,7 +579,7 @@ int satipRTSP::sendPlay()
 		return RTSP_ERROR;
 	}
 
-	oss_tx_data << "PLAY rtsp://" << m_host << ":" << m_port << "/" << "stream=" << m_rtsp_stream_id;
+	oss_tx_data << "PLAY rtsp://" << m_host << ":" << m_port << "/";
 	oss_tx_data << m_satip_config->getPlayData() << " RTSP/1.0\r\n";
 	oss_tx_data << "CSeq: " << m_rtsp_cseq++ << "\r\n";
 	oss_tx_data << "Session: " << m_rtsp_session_id << "\r\n";
@@ -616,8 +613,6 @@ int satipRTSP::sendOption()
 	}
 
 	oss_tx_data << "OPTIONS rtsp://" << m_host << ":" << m_port << "/";
-//	if (m_rtsp_stream_id != -1)
-//	oss_tx_data << "stream=" << m_rtsp_stream_id;
 	oss_tx_data << " RTSP/1.0\r\n";
 
 	oss_tx_data << "CSeq: " << m_rtsp_cseq++ << "\r\n";
@@ -641,7 +636,7 @@ int satipRTSP::sendTearDown()
 	std::ostringstream oss_tx_data;
 
 	/*
-	TEARDOWN rtsp://192.168.178.57:554/stream=2 RTSP/1.0
+	TEARDOWN rtsp://192.168.178.57:554/ RTSP/1.0
 	CSeq:5
 	Session:2180f601c42957d
 	<CRLF>
@@ -653,7 +648,7 @@ int satipRTSP::sendTearDown()
 		return RTSP_ERROR;
 	}
 
-	oss_tx_data << "TEARDOWN rtsp://" << m_host << ":" << m_port << "/stream=" << m_rtsp_stream_id << " RTSP/1.0\r\n";
+	oss_tx_data << "TEARDOWN rtsp://" << m_host << ":" << m_port << " RTSP/1.0\r\n";
 	oss_tx_data << "CSeq: " << m_rtsp_cseq++ << "\r\n";
 	oss_tx_data << "Session: " << m_rtsp_session_id << "\r\n";
 	oss_tx_data << "\r\n";
@@ -679,8 +674,6 @@ int satipRTSP::sendDescribe()
 	*/
 
 	oss_tx_data << "DESCRIBE rtsp://" << m_host << ":" << m_port << "/";
-	if (m_rtsp_stream_id != -1)
-		oss_tx_data << "stream=" << m_rtsp_stream_id;
 	oss_tx_data << " RTSP/1.0\r\n";
 	oss_tx_data << "CSeq: " << m_rtsp_cseq++ << "\r\n";
 	oss_tx_data << "Accept: application/sdp" << "\r\n";
@@ -748,7 +741,7 @@ void satipRTSP::handleRTSPStatus()
 					if (sendRequest(RTSP_REQUEST_PLAY) == RTSP_OK) // send ok
 					{
 						m_rtsp_status = RTSP_STATUS_SESSION_PLAYING;
-					}			
+					}
 				}
 				else if (channel_status == CONFIG_STATUS_CHANNEL_INVALID)
 				{
@@ -894,9 +887,9 @@ void satipRTSP::handlePollEvents(short events)
 	}
 }
 
-int satipRTSP::getPollTimeout() 
-{ 
-	return m_satip_timer.getNextTimerBegin(); 
+int satipRTSP::getPollTimeout()
+{
+	return m_satip_timer.getNextTimerBegin();
 }
 
 void satipRTSP::handleNextTimer()
